@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import auth
-from .models import user  
+from .routers import auth, vitals
+from .models import user, vitals as vitals_model
 
 app = FastAPI(
     title="CurePulse AI API",
-    description="Rural Healthcare Intelligence Platform",
+    description="Healthcare Intelligence Platform",
     version="1.0.0"
 )
 
@@ -26,14 +26,11 @@ async def startup():
 
 @app.get("/")
 async def root():
-    return {
-        "message": "CurePulse AI API is running",
-        "version": "1.0.0",
-        "phase": "Phase 1 - Foundation"
-    }
+    return {"message": "CurePulse AI API is running", "version": "1.0.0"}
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
 
 app.include_router(auth.router)
+app.include_router(vitals.router)
