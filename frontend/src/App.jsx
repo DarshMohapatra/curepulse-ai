@@ -6,6 +6,7 @@ import Signup from './pages/auth/Signup'
 import PatientDashboard from './pages/patient/PatientDashboard'
 import useAuthStore from './stores/authStore'
 import VitalsEntry from './pages/patient/VitalsEntry'
+import VitalsHistory from './pages/patient/VitalsHistory'
 
 function App() {
   const loadFromStorage = useAuthStore((state) => state.loadFromStorage)
@@ -18,6 +19,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/patient/dashboard" element={<PatientDashboard />} />
       <Route path="/patient/vitals/entry" element={<VitalsEntry />} />
+      <Route path="/patient/vitals/history" element={<VitalsHistory />} />
     </Routes>
   )
 }

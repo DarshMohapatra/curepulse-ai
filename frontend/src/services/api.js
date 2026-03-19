@@ -19,8 +19,8 @@ export const authAPI = {
 }
 
 export const vitalsAPI = {
-  record:(data) => api.post('/api/vitals/',data),
-  getAll: (patientID) => api.get('/api/vitals/${patientID}'),
-  getLatest: (patientID) => api.get('/api/vitals/${patienID}/latest')
+  record: (data) => api.post('/api/vitals/', data),
+  getAll: (patientId) => api.get(`/api/vitals/${patientId}`),
+  getLatest: (patientId) => api.get(`/api/vitals/${patientId}/latest`),
 }
 export default api

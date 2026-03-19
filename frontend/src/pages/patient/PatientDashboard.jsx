@@ -11,7 +11,7 @@ const card = {
 }
 
 const features = [
-  { title:'Vitals History', desc:'Track your health over time', icon:'📈', phase:'Phase 1', path:'/patient/vitals/entry' },
+  { title:'Vitals History', desc:'Track your health over time', icon:'📈', phase:'Phase 1', path:'/patient/vitals/history' },
   { title:'Symptom Checker', desc:'AI triage assistant', icon:'🤖', phase:'Phase 2', path:null },
   { title:'Lab Reports', desc:'AI-powered analysis', icon:'🧪', phase:'Phase 2', path:null },
   { title:'Teleconsult', desc:'Video with your doctor', icon:'📹', phase:'Phase 3', path:null },
