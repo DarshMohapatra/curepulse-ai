@@ -19,12 +19,12 @@ export default function MitraDashboard() {
   ]
 
   const actions = [
-    { title:'Record Patient Vitals', desc:'Enter vitals for an assigned patient', icon:'📊', phase:'Phase 1', available:true },
-    { title:'Patient List', desc:'View all assigned patients', icon:'👥', phase:'Phase 1', available:false },
-    { title:'Risk Queue', desc:'Patients sorted by deterioration risk', icon:'⚡', phase:'Phase 4', available:false },
-    { title:'Alert Centre', desc:'View and acknowledge health alerts', icon:'🚨', phase:'Phase 2', available:false },
-    { title:'Schedule Visit', desc:'Plan home or clinic visits', icon:'📅', phase:'Phase 5', available:false },
-    { title:'Lab Report Upload', desc:'Scan and upload patient lab reports', icon:'🧪', phase:'Phase 2', available:false },
+    { title:'Record Patient Vitals', desc:'Enter vitals for an assigned patient', icon:'📊', phase:'Phase 1', available:true, path:'/patient/vitals/entry' },
+    { title:'Patient List', desc:'View all assigned patients', icon:'👥', phase:'Phase 1', available:false, path:null },
+    { title:'Risk Queue', desc:'Patients sorted by deterioration risk', icon:'⚡', phase:'Phase 4', available:false, path:null },
+    { title:'Alert Centre', desc:'View and acknowledge health alerts', icon:'🚨', phase:'Phase 2', available:false, path:null },
+    { title:'Schedule Visit', desc:'Plan home or clinic visits', icon:'📅', phase:'Phase 5', available:false, path:null },
+    { title:'Lab Report Upload', desc:'Scan and upload patient lab reports', icon:'🧪', phase:'Phase 2', available:false, path:null },
   ]
 
   return (
@@ -97,7 +97,15 @@ export default function MitraDashboard() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
               {actions.map(a => (
                 <div key={a.title}
-                  style={{ background:'#080d1a', border:`1px solid ${a.available ? 'rgba(201,168,76,0.3)' : '#1a2540'}`, borderRadius:12, padding:16, cursor: a.available ? 'pointer' : 'default', transition:'all 0.2s', opacity: a.available ? 1 : 0.6 }}
+                  onClick={() => a.path && navigate(a.path)}
+                  style={{
+                    background:'#080d1a',
+                    border:`1px solid ${a.available ? 'rgba(201,168,76,0.3)' : '#1a2540'}`,
+                    borderRadius:12, padding:16,
+                    cursor: a.available ? 'pointer' : 'default',
+                    transition:'all 0.2s',
+                    opacity: a.available ? 1 : 0.6
+                  }}
                   onMouseEnter={e => a.available && (e.currentTarget.style.borderColor='#c9a84c')}
                   onMouseLeave={e => a.available && (e.currentTarget.style.borderColor='rgba(201,168,76,0.3)')}>
                   <div style={{ fontSize:24, marginBottom:8 }}>{a.icon}</div>
@@ -114,7 +122,6 @@ export default function MitraDashboard() {
           {/* Right panel */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
-            {/* Today's schedule */}
             <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:14, fontWeight:600, marginBottom:14 }}>Today's Schedule</h3>
               <div style={{ textAlign:'center', padding:'20px 0', color:'#4a6080', fontSize:13 }}>
@@ -124,7 +131,6 @@ export default function MitraDashboard() {
               </div>
             </div>
 
-            {/* Quick info */}
             <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:14, fontWeight:600, marginBottom:14 }}>This Week</h3>
               {[
@@ -139,7 +145,6 @@ export default function MitraDashboard() {
               ))}
             </div>
 
-            {/* Role info card */}
             <div style={{ background:'rgba(16,185,129,0.06)', border:'1px solid rgba(16,185,129,0.15)', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:13, fontWeight:600, color:'#10b981', marginBottom:10 }}>Your Role</h3>
               <p style={{ fontSize:12, color:'#4a6080', lineHeight:1.7 }}>

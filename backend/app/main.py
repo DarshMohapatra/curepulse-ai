@@ -12,7 +12,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://frontend-chi-lilac-63.vercel.app",
+        "https://curepulse-ai.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*-darshmohapatras-projects\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

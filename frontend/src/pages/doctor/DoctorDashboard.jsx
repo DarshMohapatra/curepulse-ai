@@ -20,7 +20,7 @@ export default function DoctorDashboard() {
 
   const actions = [
     { title:'Teleconsult Queue', desc:'Upcoming video consultations', icon:'📹', phase:'Phase 3', available:false },
-    { title:'Patient Search', desc:'Find and view patient records', icon:'🔍', phase:'Phase 1', available:false },
+    { title:'Patient Search', desc:'Find and view patient records', icon:'🔍', phase:'Phase 3', available:false },
     { title:'Pre-Consult Brief', desc:'AI summary before teleconsult', icon:'🤖', phase:'Phase 3', available:false },
     { title:'SOAP Notes', desc:'AI-generated clinical notes', icon:'📝', phase:'Phase 3', available:false },
     { title:'Prescription Builder', desc:'Write prescriptions with drug checks', icon:'💊', phase:'Phase 3', available:false },
@@ -92,7 +92,7 @@ export default function DoctorDashboard() {
           <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:24 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:20 }}>
               <h2 style={{ fontSize:15, fontWeight:600 }}>Clinical Tools</h2>
-              <span style={{ fontSize:12, color:'#4a6080' }}>AI-enhanced</span>
+              <span style={{ fontSize:12, color:'#4a6080' }}>AI-enhanced — coming Phase 3</span>
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
               {actions.map(a => (
@@ -112,7 +112,6 @@ export default function DoctorDashboard() {
           {/* Right panel */}
           <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
-            {/* Next consult */}
             <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:14, fontWeight:600, marginBottom:14 }}>Next Consultation</h3>
               <div style={{ background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:10, padding:14 }}>
@@ -122,7 +121,6 @@ export default function DoctorDashboard() {
               </div>
             </div>
 
-            {/* AI features preview */}
             <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:14, fontWeight:600, marginBottom:14 }}>AI Features (Phase 3)</h3>
               {[
@@ -139,7 +137,6 @@ export default function DoctorDashboard() {
               ))}
             </div>
 
-            {/* Role info */}
             <div style={{ background:'rgba(139,92,246,0.06)', border:'1px solid rgba(139,92,246,0.15)', borderRadius:16, padding:20 }}>
               <h3 style={{ fontSize:13, fontWeight:600, color:'#8b5cf6', marginBottom:10 }}>AI-Enhanced Practice</h3>
               <p style={{ fontSize:12, color:'#4a6080', lineHeight:1.7 }}>
