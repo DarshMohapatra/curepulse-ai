@@ -16,7 +16,7 @@ const features = [
   { title:'Lab Reports', desc:'AI-powered analysis', icon:'🧪', phase:'Phase 2', path:null },
   { title:'Teleconsult', desc:'Video with your doctor', icon:'📹', phase:'Phase 3', path:null },
   { title:'Prescriptions', desc:'Active medications', icon:'💊', phase:'Phase 3', path:null },
-  { title:'Health Timeline', desc:'Your complete history', icon:'🗂️', phase:'Phase 1', path:null },
+  { title:'Health Timeline', desc:'Your complete history', icon:'🗂️', phase:'Phase 1', path:'/patient/timeline' },
   { title:'Risk Score', desc:'Predictive health AI', icon:'⚡', phase:'Phase 4', path:null },
   { title:'Skin Scanner', desc:'CNN-based screening', icon:'🔬', phase:'Phase 4', path:null },
 ]
@@ -31,27 +31,19 @@ export default function PatientDashboard() {
   const [vitalsCount, setVitalsCount] = useState(0)
   const [loadingVitals, setLoadingVitals] = useState(true)
 
-  useEffect(() => {
-    loadFromStorage()
-  }, [])
+  useEffect(() => { loadFromStorage() }, [])
 
   useEffect(() => {
-    if (user?.id) {
-      fetchVitals()
-    }
+    if (user?.id) fetchVitals()
   }, [user])
 
   const fetchVitals = async () => {
     try {
-      // Get latest vitals
       const latestRes = await vitalsAPI.getLatest(user.id)
       setLatestVitals(latestRes.data)
-
-      // Get all vitals for count
       const allRes = await vitalsAPI.getAll(user.id)
       setVitalsCount(allRes.data.length)
-    } catch (err) {
-      // No vitals yet — that's fine
+    } catch {
       setLatestVitals(null)
       setVitalsCount(0)
     } finally {
@@ -61,7 +53,6 @@ export default function PatientDashboard() {
 
   const handleLogout = () => { logout(); navigate('/') }
 
-  // Color code vitals
   const getVitalStatus = (type, value) => {
     if (!value) return { status:'No data', color:'#4a6080' }
     const ranges = {
@@ -150,14 +141,14 @@ export default function PatientDashboard() {
         <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28}}>
           <div>
             <h1 style={{fontSize:24, fontWeight:700, color:'#f0f4ff', marginBottom:4}}>
-              Good morning, {user?.full_name?.split(' ')[0]} 👋
+              Hello, {user?.full_name?.split(' ')[0]} 👋
             </h1>
             <p style={{fontSize:14, color:'#4a6080'}}>Here's your health overview for today</p>
           </div>
           <div style={{background:'rgba(201,168,76,0.08)', border:'1px solid rgba(201,168,76,0.2)', borderRadius:10, padding:'8px 16px', textAlign:'right'}}>
             <div style={{fontSize:11, color:'#c9a84c', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase'}}>Risk Status</div>
-            <div style={{fontSize:16, fontWeight:700, color: vitalsCount > 0 ? '#10b981' : '#4a6080', marginTop:2}}>
-              {vitalsCount > 0 ? 'Low Risk ✓' : 'No data yet'}
+            <div style={{fontSize:16, fontWeight:700, color:'#4a6080', marginTop:2}}>
+              Phase 4 feature
             </div>
           </div>
         </div>
@@ -219,13 +210,13 @@ export default function PatientDashboard() {
               <h3 style={{fontSize:14, fontWeight:600, color:'#f0f4ff', marginBottom:16}}>Health Score</h3>
               <div style={{textAlign:'center', padding:'8px 0'}}>
                 <div style={{fontSize:56, fontWeight:700, color:'#c9a84c', lineHeight:1}}>
-                  {vitalsCount > 0 ? '86' : '—'}
+                  —
                 </div>
                 <div style={{fontSize:13, color:'#4a6080', marginTop:6}}>
-                  {vitalsCount > 0 ? 'out of 100' : 'Record vitals first'}
+                  {vitalsCount > 0 ? 'Available in Phase 4' : 'Record vitals first'}
                 </div>
                 <div style={{marginTop:16, background:'#080d1a', borderRadius:8, height:6, overflow:'hidden'}}>
-                  <div style={{width: vitalsCount > 0 ? '86%' : '0%', height:'100%', background:'linear-gradient(90deg,#c9a84c,#e8c76a)', borderRadius:8, transition:'width 0.5s'}} />
+                  <div style={{width:'0%', height:'100%', background:'linear-gradient(90deg,#c9a84c,#e8c76a)', borderRadius:8, transition:'width 0.5s'}} />
                 </div>
                 <button
                   onClick={() => navigate('/patient/vitals/entry')}

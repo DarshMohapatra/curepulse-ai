@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid as uuid_lib
 from ..database import get_db
 from ..models.vitals import Vitals
+from ..models.timeline import HealthTimeline
 from ..models.user import User
 from jose import jwt, JWTError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -83,19 +84,54 @@ async def record_vitals(
     if data.blood_glucose and not (20 <= data.blood_glucose <= 600):
         raise HTTPException(status_code=400, detail="Blood glucose must be between 20 and 600")
 
+    # Save vitals
     vitals = Vitals(
-    patient_id=uuid_lib.UUID(data.patient_id),
-    recorded_by=current_user.id,
-    bp_systolic=data.bp_systolic,
-    bp_diastolic=data.bp_diastolic,
-    heart_rate=data.heart_rate,
-    spo2=data.spo2,
-    temperature=data.temperature,
-    blood_glucose=data.blood_glucose,
-    notes=data.notes,
-    source="manual"
-)
+        patient_id=uuid_lib.UUID(data.patient_id),
+        recorded_by=current_user.id,
+        bp_systolic=data.bp_systolic,
+        bp_diastolic=data.bp_diastolic,
+        heart_rate=data.heart_rate,
+        spo2=data.spo2,
+        temperature=data.temperature,
+        blood_glucose=data.blood_glucose,
+        notes=data.notes,
+        source="manual"
+    )
     db.add(vitals)
+    await db.flush()  # Get the ID without committing — stays in same transaction
+
+    # Auto-create timeline event
+    summary_parts = []
+    if data.bp_systolic and data.bp_diastolic:
+        summary_parts.append(f"BP: {data.bp_systolic}/{data.bp_diastolic} mmHg")
+    if data.heart_rate:
+        summary_parts.append(f"HR: {data.heart_rate} bpm")
+    if data.spo2:
+        summary_parts.append(f"SpO2: {data.spo2}%")
+    if data.temperature:
+        summary_parts.append(f"Temp: {data.temperature}°F")
+    if data.blood_glucose:
+        summary_parts.append(f"Glucose: {data.blood_glucose} mg/dL")
+
+    timeline_event = HealthTimeline(
+        patient_id=uuid_lib.UUID(data.patient_id),
+        event_type="vitals",
+        title="Vitals Recorded",
+        summary=", ".join(summary_parts) if summary_parts else "Vitals recorded manually",
+        detail_json={
+            "bp_systolic": data.bp_systolic,
+            "bp_diastolic": data.bp_diastolic,
+            "heart_rate": data.heart_rate,
+            "spo2": data.spo2,
+            "temperature": data.temperature,
+            "blood_glucose": data.blood_glucose,
+            "notes": data.notes
+        },
+        related_id=vitals.id
+    )
+    db.add(timeline_event)
+
+    # Single atomic commit — both vitals and timeline succeed or fail together
     await db.commit()
     await db.refresh(vitals)
 

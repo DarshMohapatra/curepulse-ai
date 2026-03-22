@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   headers: { 'Content-Type': 'application/json' }
 })
 
@@ -22,5 +22,10 @@ export const vitalsAPI = {
   record: (data) => api.post('/api/vitals/', data),
   getAll: (patientId) => api.get(`/api/vitals/${patientId}`),
   getLatest: (patientId) => api.get(`/api/vitals/${patientId}/latest`),
+}
+
+export const timelineAPI = {
+  getAll: (patientId) => api.get(`/api/timeline/${patientId}`),
+  create: (data) => api.post('/api/timeline/', data),
 }
 export default api
