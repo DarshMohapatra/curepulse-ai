@@ -1,7 +1,8 @@
 # Environment secrets - NEVER commit these
-.env1
-.env.local
-.env.production
+.env
+.env.*
+!.env.example
+backend/.env
 
 # Python
 venv/
@@ -30,3 +31,6 @@ Thumbs.db
 # IDE
 .vscode/settings.json
 .idea/
+
+# Vercel
+.vercel/
