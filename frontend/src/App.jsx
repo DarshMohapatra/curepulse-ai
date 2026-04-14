@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import Landing from './pages/landing'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/SignUp'
+import ForgotPassword from './pages/auth/ForgotPassword'
 import PatientDashboard from './pages/patient/PatientDashboard'
 import useAuthStore from './stores/authStore'
 import VitalsEntry from './pages/patient/VitalsEntry'
@@ -20,6 +21,7 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/patient/dashboard" element={<PatientDashboard />} />
       <Route path="/patient/vitals/entry" element={<VitalsEntry />} />
       <Route path="/patient/vitals/history" element={<VitalsHistory />} />

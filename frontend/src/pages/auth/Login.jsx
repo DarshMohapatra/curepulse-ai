@@ -83,10 +83,10 @@ const handleSubmit = async () => {
           </p>
           <div style={S.statsGrid}>
             {[
-              {value:'150+', label:'Active eClinics'},
-              {value:'1,000+', label:'Swasthya Mitras'},
-              {value:'30', label:'AI Features'},
-              {value:'3', label:'Languages'},
+              {value:'6', label:'ML Models Integrated'},
+              {value:'30', label:'AI/Web Features'},
+              {value:'3', label:'User Roles'},
+              {value:'6', label:'Tech Stacks Combined'},
             ].map(s => (
               <div key={s.label} style={S.statCard}>
                 <div style={S.statVal}>{s.value}</div>
@@ -126,6 +126,12 @@ const handleSubmit = async () => {
               {loading ? 'Signing in...' : 'Sign In →'}
             </button>
           </div>
+
+          <p style={{ textAlign:'right', marginTop:10, marginBottom:0 }}>
+            <a href="/forgot-password" style={{ color:'#c9a84c', fontSize:12, textDecoration:'none', fontWeight:500 }}>
+              Forgot password?
+            </a>
+          </p>
 
           <div style={S.divider}>
             <div style={S.divLine}/><span style={S.divText}>OR</span><div style={S.divLine}/>

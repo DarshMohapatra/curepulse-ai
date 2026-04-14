@@ -16,12 +16,15 @@ api.interceptors.request.use((config) => {
 export const authAPI = {
   signup: (data) => api.post('/api/auth/signup', data),
   login: (data) => api.post('/api/auth/login', data),
+  resetPassword: (data) => api.post('/api/auth/reset-password', data),
 }
 
 export const vitalsAPI = {
   record: (data) => api.post('/api/vitals/', data),
   getAll: (patientId) => api.get(`/api/vitals/${patientId}`),
   getLatest: (patientId) => api.get(`/api/vitals/${patientId}/latest`),
+  forecast: (patientId, vital = 'bp_systolic', days = 7) =>
+    api.get(`/api/vitals/${patientId}/forecast?vital=${vital}&days=${days}`),
 }
 
 export const timelineAPI = {

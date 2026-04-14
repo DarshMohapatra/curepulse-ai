@@ -30,6 +30,10 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     user: dict
 
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
 # --- Helper functions ---
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -95,3 +99,20 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
             "role": user.role
         }
     }
+
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found with this email")
+
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    user.hashed_password = hash_password(data.new_password)
+    await db.commit()
+
+    return {"message": "Password reset successfully. You can now log in with your new password."}

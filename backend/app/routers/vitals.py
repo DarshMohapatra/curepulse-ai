@@ -3,8 +3,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid as uuid_lib
+import numpy as np
 from ..database import get_db
 from ..models.vitals import Vitals
 from ..models.timeline import HealthTimeline
@@ -206,3 +207,126 @@ async def get_latest_vitals(
         source=vitals.source,
         recorded_at=vitals.recorded_at
     )
+
+
+# ====================================================================
+# PHASE 2 — B3: Trend Analysis & Forecasting
+# ====================================================================
+# WHY: A patient's vitals over time have a TREND. If BP is slowly
+# rising week over week, we want to PREDICT where it's heading
+# so Swasthya Mitras can intervene BEFORE a crisis.
+#
+# HOW: Linear regression (numpy) fits a line through historical
+# readings, then extends it 7 days into the future. Confidence
+# bands show the uncertainty range.
+#
+# MATH:
+#   y = mx + b  (where x = day number, y = vital value)
+#   m (slope) = how fast the vital is changing per day
+#   b (intercept) = baseline value
+#   confidence = ±1.96 * std_dev of residuals (95% CI)
+# ====================================================================
+
+VALID_VITALS = ["bp_systolic", "bp_diastolic", "heart_rate", "spo2", "temperature", "blood_glucose"]
+
+@router.get("/{patient_id}/forecast")
+async def get_vitals_forecast(
+    patient_id: str,
+    vital: str = "bp_systolic",
+    days: int = 7,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Forecast a patient's vital trend for the next N days.
+    Uses linear regression on historical readings.
+    Returns: historical data + forecast + confidence bands.
+    """
+
+    # Step 1: Validate the requested vital type
+    if vital not in VALID_VITALS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid vital type. Must be one of: {VALID_VITALS}"
+        )
+
+    # Step 2: Fetch historical vitals (oldest first for time-series)
+    result = await db.execute(
+        select(Vitals)
+        .where(Vitals.patient_id == patient_id)
+        .order_by(Vitals.recorded_at)
+        .limit(100)
+    )
+    vitals_list = result.scalars().all()
+
+    # Step 3: Extract non-null values for the requested vital
+    data_points = []
+    for v in vitals_list:
+        value = getattr(v, vital)
+        if value is not None:
+            data_points.append({
+                "date": v.recorded_at.isoformat(),
+                "value": float(value),
+                "timestamp": v.recorded_at.timestamp()
+            })
+
+    if len(data_points) < 3:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Need at least 3 readings for forecast. Found {len(data_points)}."
+        )
+
+    # Step 4: Convert timestamps to "days since first reading"
+    t0 = data_points[0]["timestamp"]
+    x = np.array([(dp["timestamp"] - t0) / 86400.0 for dp in data_points])
+    y = np.array([dp["value"] for dp in data_points])
+
+    # Step 5: Linear regression — y = slope*x + intercept
+    coefficients = np.polyfit(x, y, 1)
+    slope = coefficients[0]
+    intercept = coefficients[1]
+
+    # Step 6: Confidence interval from residuals
+    y_predicted = slope * x + intercept
+    residuals = y - y_predicted
+    std_error = float(np.std(residuals))
+    ci_multiplier = 1.96  # 95% confidence
+
+    # Step 7: Generate forecast points
+    last_day = x[-1]
+    last_date = datetime.fromisoformat(data_points[-1]["date"])
+
+    forecast = []
+    for i in range(1, days + 1):
+        future_day = last_day + i
+        predicted_value = float(slope * future_day + intercept)
+        forecast_date = last_date + timedelta(days=i)
+
+        forecast.append({
+            "date": forecast_date.isoformat(),
+            "value": round(predicted_value, 1),
+            "upper": round(predicted_value + ci_multiplier * std_error, 1),
+            "lower": round(predicted_value - ci_multiplier * std_error, 1),
+        })
+
+    # Step 8: Trend summary
+    daily_change = float(slope)
+    weekly_change = daily_change * 7
+    if abs(weekly_change) < 1:
+        trend = "stable"
+    elif weekly_change > 0:
+        trend = "rising"
+    else:
+        trend = "falling"
+
+    return {
+        "vital": vital,
+        "patient_id": patient_id,
+        "trend": trend,
+        "daily_change": round(daily_change, 2),
+        "weekly_change": round(weekly_change, 2),
+        "confidence_level": "95%",
+        "std_error": round(std_error, 2),
+        "historical": [{"date": dp["date"], "value": dp["value"]} for dp in data_points],
+        "forecast": forecast,
+    }

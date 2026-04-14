@@ -27,17 +27,17 @@ const features = [
 ]
 
 const steps = [
-  { step:'01', title:'Patient gets screened', desc:'Enter vitals at any eClinic or at home. AI symptom triage chatbot assesses urgency instantly. Lab reports scanned and interpreted in seconds.', icon:'🏥' },
+  { step:'01', title:'Patient gets screened', desc:'Enter vitals at home or on the go. AI symptom triage chatbot assesses urgency instantly. Lab reports scanned and interpreted in seconds.', icon:'🏥' },
   { step:'02', title:'Vitals monitored continuously', desc:'Real-time dashboard tracks BP, SpO2, heart rate, temperature, and glucose. Anomaly detection fires the moment something looks wrong.', icon:'📡' },
   { step:'03', title:'Doctor consulted via AI-enhanced video', desc:'Pre-consult AI brief auto-generated. Live transcription during the call. SOAP notes and prescription drafted by AI — doctor reviews and approves.', icon:'👨‍⚕️' },
   { step:'04', title:'Patient receives full summary', desc:'Post-consult summary in your language. Follow-up scheduled automatically. Monthly health report sent to both patient and doctor.', icon:'📋' },
 ]
 
 const stats = [
-  { value:'150+', label:'Active eClinics across India', icon:'🏥' },
-  { value:'1,000+', label:'Health workers on the platform', icon:'👥' },
-  { value:'30', label:'AI features across 6 phases', icon:'🤖' },
-  { value:'6', label:'ML models trained from scratch', icon:'🧠' },
+  { value:'6', label:'ML models trained & integrated', icon:'🧠' },
+  { value:'30', label:'AI + Web features across 6 phases', icon:'🤖' },
+  { value:'3', label:'User roles (Patient, Mitra, Doctor)', icon:'👥' },
+  { value:'6', label:'Tech stacks combined (React, FastAPI, PyTorch, etc.)', icon:'🔧' },
 ]
 
 const problem = [
