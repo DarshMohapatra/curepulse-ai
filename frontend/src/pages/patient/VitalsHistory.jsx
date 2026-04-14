@@ -383,36 +383,39 @@ export default function VitalsHistory() {
                   combined[histSlice.length - 1].forecast = combined[histSlice.length - 1].actual
                 }
 
+                // Compute Y-axis range from all values with padding
+                const allValues = combined.flatMap(d =>
+                  [d.actual, d.forecast, d.upper, d.lower].filter(v => v !== null && v !== undefined)
+                )
+                const yMin = Math.floor(Math.min(...allValues) - 5)
+                const yMax = Math.ceil(Math.max(...allValues) + 5)
+
                 return (
                   <div style={{ height:280 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={combined} margin={{ top:10, right:20, left:0, bottom:0 }}>
+                        <defs>
+                          <linearGradient id="confBand" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={fConfig?.color || '#c9a84c'} stopOpacity={0.15} />
+                            <stop offset="100%" stopColor={fConfig?.color || '#c9a84c'} stopOpacity={0.05} />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="#1a2540" />
                         <XAxis dataKey="date" tick={{ fill:'#4a6080', fontSize:10 }} axisLine={{ stroke:'#1a2540' }} tickLine={false} />
-                        <YAxis tick={{ fill:'#4a6080', fontSize:11 }} axisLine={{ stroke:'#1a2540' }} tickLine={false} width={40} />
+                        <YAxis domain={[yMin, yMax]} tick={{ fill:'#4a6080', fontSize:11 }} axisLine={{ stroke:'#1a2540' }} tickLine={false} width={45} />
                         <Tooltip
                           contentStyle={{ background:'#0d1528', border:'1px solid #c9a84c', borderRadius:10 }}
                           labelStyle={{ color:'#4a6080', fontSize:12 }}
                           formatter={(value, name) => {
                             if (value === null) return [null, null]
-                            const labels = { actual:'Actual', forecast:'Predicted', upper:'Upper bound', lower:'Lower bound' }
+                            const labels = { actual:'Actual', forecast:'Predicted', upper:'Upper CI', lower:'Lower CI' }
                             return [`${value} ${fConfig?.unit || ''}`, labels[name] || name]
                           }}
                         />
 
-                        {/* Confidence band (shaded area between upper and lower) */}
-                        <Area type="monotone" dataKey="upper" stroke="none" fill={fConfig?.color || '#c9a84c'} fillOpacity={0.08} />
-                        <Area type="monotone" dataKey="lower" stroke="none" fill="#080d1a" fillOpacity={1} />
-
-                        {/* Reference lines for normal range */}
-                        {fConfig?.refMax && (
-                          <ReferenceLine y={fConfig.refMax} stroke={fConfig.color} strokeDasharray="4 4" strokeOpacity={0.3}
-                            label={{ value:'Max', fill:fConfig.color, fontSize:10, opacity:0.5 }} />
-                        )}
-                        {fConfig?.refMin && (
-                          <ReferenceLine y={fConfig.refMin} stroke={fConfig.color} strokeDasharray="4 4" strokeOpacity={0.3}
-                            label={{ value:'Min', fill:fConfig.color, fontSize:10, opacity:0.5 }} />
-                        )}
+                        {/* Confidence band — upper area filled, lower area masks it */}
+                        <Area type="monotone" dataKey="upper" stroke="none" fill="url(#confBand)" connectNulls={false} />
+                        <Area type="monotone" dataKey="lower" stroke="none" fill="#0d1528" connectNulls={false} />
 
                         {/* Historical actual line (solid) */}
                         <Line type="monotone" dataKey="actual" stroke={fConfig?.color || '#c9a84c'} strokeWidth={2.5}
@@ -422,11 +425,11 @@ export default function VitalsHistory() {
                         <Line type="monotone" dataKey="forecast" stroke={fConfig?.color || '#c9a84c'} strokeWidth={2.5}
                           strokeDasharray="6 4" dot={{ fill:fConfig?.color || '#c9a84c', r:3, strokeWidth:0, fillOpacity:0.6 }} connectNulls={false} />
 
-                        {/* Upper/lower bounds (thin dashed) */}
+                        {/* Upper/lower bound lines (thin dashed) */}
                         <Line type="monotone" dataKey="upper" stroke={fConfig?.color || '#c9a84c'} strokeWidth={1}
-                          strokeDasharray="3 3" strokeOpacity={0.4} dot={false} connectNulls={false} />
+                          strokeDasharray="3 3" strokeOpacity={0.35} dot={false} connectNulls={false} />
                         <Line type="monotone" dataKey="lower" stroke={fConfig?.color || '#c9a84c'} strokeWidth={1}
-                          strokeDasharray="3 3" strokeOpacity={0.4} dot={false} connectNulls={false} />
+                          strokeDasharray="3 3" strokeOpacity={0.35} dot={false} connectNulls={false} />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
