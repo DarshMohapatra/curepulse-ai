@@ -4,7 +4,8 @@ import useAuthStore from '../../stores/authStore'
 import { vitalsAPI } from '../../services/api'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine
+  Tooltip, ResponsiveContainer, ReferenceLine,
+  Area, ComposedChart
 } from 'recharts'
 
 export default function VitalsHistory() {
@@ -14,6 +15,9 @@ export default function VitalsHistory() {
   const [vitals, setVitals] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeChart, setActiveChart] = useState('heart_rate')
+  const [forecast, setForecast] = useState(null)
+  const [forecastLoading, setForecastLoading] = useState(false)
+  const [forecastVital, setForecastVital] = useState('bp_systolic')
 
   useEffect(() => { loadFromStorage() }, [])
   useEffect(() => { if (user?.id) fetchVitals() }, [user])
@@ -26,6 +30,20 @@ export default function VitalsHistory() {
       setVitals([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  useEffect(() => { if (user?.id) fetchForecast() }, [user, forecastVital])
+
+  const fetchForecast = async () => {
+    setForecastLoading(true)
+    try {
+      const res = await vitalsAPI.forecast(user.id, forecastVital, 7)
+      setForecast(res.data)
+    } catch {
+      setForecast(null)
+    } finally {
+      setForecastLoading(false)
     }
   }
 
@@ -281,6 +299,164 @@ export default function VitalsHistory() {
                   <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#4a6080' }}>
                     <div style={{ width:20, height:2, background:'#e8c76a', borderRadius:2, borderTop:'2px dashed #e8c76a' }} />
                     Diastolic
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ============================================ */}
+            {/* PHASE 2 — B3: Forecast Chart                */}
+            {/* ============================================ */}
+            <div style={{ background:'#0d1528', border:'1px solid #1a2540', borderRadius:16, padding:24, marginBottom:24 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                <div>
+                  <h2 style={{ fontSize:15, fontWeight:600, marginBottom:4 }}>7-Day Forecast</h2>
+                  <p style={{ fontSize:12, color:'#4a6080' }}>AI-powered trend prediction with 95% confidence interval</p>
+                </div>
+                {forecast && (
+                  <div style={{
+                    background: forecast.trend === 'rising' ? 'rgba(239,68,68,0.1)' : forecast.trend === 'falling' ? 'rgba(59,130,246,0.1)' : 'rgba(16,185,129,0.1)',
+                    border: `1px solid ${forecast.trend === 'rising' ? 'rgba(239,68,68,0.25)' : forecast.trend === 'falling' ? 'rgba(59,130,246,0.25)' : 'rgba(16,185,129,0.25)'}`,
+                    color: forecast.trend === 'rising' ? '#ef4444' : forecast.trend === 'falling' ? '#3b82f6' : '#10b981',
+                    padding:'6px 14px', borderRadius:10, fontSize:12, fontWeight:600,
+                  }}>
+                    {forecast.trend === 'rising' ? '↑ Rising' : forecast.trend === 'falling' ? '↓ Falling' : '→ Stable'}
+                    <span style={{ marginLeft:8, opacity:0.7 }}>
+                      {forecast.weekly_change > 0 ? '+' : ''}{forecast.weekly_change}/week
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Vital selector for forecast */}
+              <div style={{ display:'flex', gap:8, marginBottom:20, flexWrap:'wrap' }}>
+                {charts.map(c => (
+                  <button key={c.key}
+                    onClick={() => setForecastVital(c.key)}
+                    style={{
+                      background: forecastVital === c.key ? `${c.color}22` : 'transparent',
+                      border: `1px solid ${forecastVital === c.key ? c.color : '#1a2540'}`,
+                      color: forecastVital === c.key ? c.color : '#4a6080',
+                      borderRadius:8, padding:'6px 14px', fontSize:12,
+                      fontWeight:600, cursor:'pointer', transition:'all 0.2s'
+                    }}>
+                    {c.icon} {c.label}
+                  </button>
+                ))}
+              </div>
+
+              {forecastLoading && (
+                <div style={{ textAlign:'center', padding:'40px 0', color:'#4a6080', fontSize:13 }}>
+                  Generating forecast...
+                </div>
+              )}
+
+              {!forecastLoading && !forecast && (
+                <div style={{ textAlign:'center', padding:'40px 0', color:'#4a6080', fontSize:13 }}>
+                  Not enough data for forecast (need 3+ readings)
+                </div>
+              )}
+
+              {!forecastLoading && forecast && (() => {
+                const fConfig = charts.find(c => c.key === forecastVital)
+                // Combine historical (last 14 points) + forecast into one dataset
+                const histSlice = forecast.historical.slice(-14)
+                const combined = [
+                  ...histSlice.map(h => ({
+                    date: new Date(h.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' }),
+                    actual: h.value,
+                    forecast: null,
+                    upper: null,
+                    lower: null,
+                  })),
+                  // Bridge point: last historical = first forecast anchor
+                  ...forecast.forecast.map(f => ({
+                    date: new Date(f.date).toLocaleDateString('en-IN', { day:'numeric', month:'short' }),
+                    actual: null,
+                    forecast: f.value,
+                    upper: f.upper,
+                    lower: f.lower,
+                  })),
+                ]
+                // Connect the bridge: set forecast value on last historical point
+                if (combined.length > histSlice.length) {
+                  combined[histSlice.length - 1].forecast = combined[histSlice.length - 1].actual
+                }
+
+                return (
+                  <div style={{ height:280 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={combined} margin={{ top:10, right:20, left:0, bottom:0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1a2540" />
+                        <XAxis dataKey="date" tick={{ fill:'#4a6080', fontSize:10 }} axisLine={{ stroke:'#1a2540' }} tickLine={false} />
+                        <YAxis tick={{ fill:'#4a6080', fontSize:11 }} axisLine={{ stroke:'#1a2540' }} tickLine={false} width={40} />
+                        <Tooltip
+                          contentStyle={{ background:'#0d1528', border:'1px solid #c9a84c', borderRadius:10 }}
+                          labelStyle={{ color:'#4a6080', fontSize:12 }}
+                          formatter={(value, name) => {
+                            if (value === null) return [null, null]
+                            const labels = { actual:'Actual', forecast:'Predicted', upper:'Upper bound', lower:'Lower bound' }
+                            return [`${value} ${fConfig?.unit || ''}`, labels[name] || name]
+                          }}
+                        />
+
+                        {/* Confidence band (shaded area between upper and lower) */}
+                        <Area type="monotone" dataKey="upper" stroke="none" fill={fConfig?.color || '#c9a84c'} fillOpacity={0.08} />
+                        <Area type="monotone" dataKey="lower" stroke="none" fill="#080d1a" fillOpacity={1} />
+
+                        {/* Reference lines for normal range */}
+                        {fConfig?.refMax && (
+                          <ReferenceLine y={fConfig.refMax} stroke={fConfig.color} strokeDasharray="4 4" strokeOpacity={0.3}
+                            label={{ value:'Max', fill:fConfig.color, fontSize:10, opacity:0.5 }} />
+                        )}
+                        {fConfig?.refMin && (
+                          <ReferenceLine y={fConfig.refMin} stroke={fConfig.color} strokeDasharray="4 4" strokeOpacity={0.3}
+                            label={{ value:'Min', fill:fConfig.color, fontSize:10, opacity:0.5 }} />
+                        )}
+
+                        {/* Historical actual line (solid) */}
+                        <Line type="monotone" dataKey="actual" stroke={fConfig?.color || '#c9a84c'} strokeWidth={2.5}
+                          dot={{ fill:fConfig?.color || '#c9a84c', r:3, strokeWidth:0 }} connectNulls={false} />
+
+                        {/* Forecast line (dashed) */}
+                        <Line type="monotone" dataKey="forecast" stroke={fConfig?.color || '#c9a84c'} strokeWidth={2.5}
+                          strokeDasharray="6 4" dot={{ fill:fConfig?.color || '#c9a84c', r:3, strokeWidth:0, fillOpacity:0.6 }} connectNulls={false} />
+
+                        {/* Upper/lower bounds (thin dashed) */}
+                        <Line type="monotone" dataKey="upper" stroke={fConfig?.color || '#c9a84c'} strokeWidth={1}
+                          strokeDasharray="3 3" strokeOpacity={0.4} dot={false} connectNulls={false} />
+                        <Line type="monotone" dataKey="lower" stroke={fConfig?.color || '#c9a84c'} strokeWidth={1}
+                          strokeDasharray="3 3" strokeOpacity={0.4} dot={false} connectNulls={false} />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                )
+              })()}
+
+              {/* Forecast stats */}
+              {!forecastLoading && forecast && (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginTop:16 }}>
+                  <div style={{ background:'#080d1a', border:'1px solid #1a2540', borderRadius:10, padding:'12px 14px' }}>
+                    <div style={{ fontSize:10, color:'#4a6080', marginBottom:4 }}>Trend</div>
+                    <div style={{ fontSize:14, fontWeight:700, color: forecast.trend === 'rising' ? '#ef4444' : forecast.trend === 'falling' ? '#3b82f6' : '#10b981', textTransform:'capitalize' }}>
+                      {forecast.trend}
+                    </div>
+                  </div>
+                  <div style={{ background:'#080d1a', border:'1px solid #1a2540', borderRadius:10, padding:'12px 14px' }}>
+                    <div style={{ fontSize:10, color:'#4a6080', marginBottom:4 }}>Daily Change</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:'#f0f4ff' }}>
+                      {forecast.daily_change > 0 ? '+' : ''}{forecast.daily_change}
+                    </div>
+                  </div>
+                  <div style={{ background:'#080d1a', border:'1px solid #1a2540', borderRadius:10, padding:'12px 14px' }}>
+                    <div style={{ fontSize:10, color:'#4a6080', marginBottom:4 }}>Weekly Change</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:'#f0f4ff' }}>
+                      {forecast.weekly_change > 0 ? '+' : ''}{forecast.weekly_change}
+                    </div>
+                  </div>
+                  <div style={{ background:'#080d1a', border:'1px solid #1a2540', borderRadius:10, padding:'12px 14px' }}>
+                    <div style={{ fontSize:10, color:'#4a6080', marginBottom:4 }}>Confidence</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:'#c9a84c' }}>{forecast.confidence_level}</div>
                   </div>
                 </div>
               )}
