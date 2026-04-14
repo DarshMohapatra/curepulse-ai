@@ -54,6 +54,7 @@ export default function PatientDashboard() {
   const handleLogout = () => { logout(); navigate('/') }
 
   const getVitalStatus = (type, value) => {
+    if (loadingVitals) return { status:'Loading...', color:'#c9a84c' }
     if (!value) return { status:'No data', color:'#4a6080' }
     const ranges = {
       heart_rate: { min:60, max:100 },
@@ -68,6 +69,7 @@ export default function PatientDashboard() {
   }
 
   const getBPStatus = (sys, dia) => {
+    if (loadingVitals) return { status:'Loading...', color:'#c9a84c' }
     if (!sys || !dia) return { status:'No data', color:'#4a6080' }
     if (sys > 130 || dia > 80) return { status:'High', color:'#ef4444' }
     if (sys < 90 || dia < 60) return { status:'Low', color:'#f59e0b' }
