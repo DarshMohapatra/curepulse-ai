@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../../stores/authStore'
-import { vitalsAPI } from '../../services/api'
+import { vitalsAPI, anomalyAPI } from '../../services/api'
 
 const card = {
   background:'#0d1528',
@@ -30,11 +30,15 @@ export default function PatientDashboard() {
   const [latestVitals, setLatestVitals] = useState(null)
   const [vitalsCount, setVitalsCount] = useState(0)
   const [loadingVitals, setLoadingVitals] = useState(true)
+  const [anomalies, setAnomalies] = useState([])
 
   useEffect(() => { loadFromStorage() }, [])
 
   useEffect(() => {
-    if (user?.id) fetchVitals()
+    if (user?.id) {
+      fetchVitals()
+      fetchAnomalies()
+    }
   }, [user])
 
   const fetchVitals = async () => {
@@ -48,6 +52,15 @@ export default function PatientDashboard() {
       setVitalsCount(0)
     } finally {
       setLoadingVitals(false)
+    }
+  }
+
+  const fetchAnomalies = async () => {
+    try {
+      const res = await anomalyAPI.getAll(user.id)
+      setAnomalies(res.data)
+    } catch {
+      setAnomalies([])
     }
   }
 
@@ -176,6 +189,48 @@ export default function PatientDashboard() {
             </div>
           ))}
         </div>
+
+        {/* Anomaly Alerts */}
+        {anomalies.length > 0 && (
+          <div style={{...card, marginBottom:24, border:'1px solid rgba(239,68,68,0.2)', background:'rgba(239,68,68,0.04)'}}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
+              <h2 style={{fontSize:15, fontWeight:600, color:'#f87171'}}>
+                Anomaly Alerts ({anomalies.filter(a => !a.acknowledged).length} active)
+              </h2>
+              <span style={{fontSize:11, color:'#4a6080'}}>Phase 2 — AI Detection</span>
+            </div>
+            <div style={{display:'flex', flexDirection:'column', gap:8}}>
+              {anomalies.slice(0, 5).map(a => {
+                const severityColors = { critical:'#ef4444', moderate:'#f59e0b', info:'#3b82f6' }
+                const color = severityColors[a.severity] || '#4a6080'
+                return (
+                  <div key={a.id} style={{
+                    background:'#0d1528', border:`1px solid ${color}33`, borderRadius:10, padding:'12px 16px',
+                    display:'flex', alignItems:'center', justifyContent:'space-between',
+                    opacity: a.acknowledged ? 0.5 : 1,
+                  }}>
+                    <div style={{display:'flex', alignItems:'center', gap:12}}>
+                      <span style={{fontSize:11, fontWeight:700, color, background:`${color}22`, padding:'2px 8px', borderRadius:6, textTransform:'uppercase'}}>
+                        {a.severity}
+                      </span>
+                      <span style={{fontSize:13, color:'#f0f4ff'}}>
+                        {a.details?.message || 'Anomaly detected'}
+                      </span>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:10}}>
+                      <span style={{fontSize:11, color:'#4a6080'}}>
+                        {new Date(a.created_at).toLocaleDateString('en-IN', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})}
+                      </span>
+                      <span style={{fontSize:10, color:'#2a3a54'}}>
+                        {a.detection_methods?.join(' + ')}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Two column layout */}
         <div style={{display:'grid', gridTemplateColumns:'2fr 1fr', gap:20}}>

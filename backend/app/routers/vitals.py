@@ -9,7 +9,9 @@ import numpy as np
 from ..database import get_db
 from ..models.vitals import Vitals
 from ..models.timeline import HealthTimeline
+from ..models.anomaly import AnomalyAlert
 from ..models.user import User
+from ..services.anomaly_service import detect_anomalies
 from jose import jwt, JWTError
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from ..config import JWT_SECRET, JWT_ALGORITHM
@@ -132,7 +134,31 @@ async def record_vitals(
     )
     db.add(timeline_event)
 
-    # Single atomic commit — both vitals and timeline succeed or fail together
+    # --- Phase 2: Anomaly Detection ---
+    # Fetch patient's historical vitals to compute baseline
+    hist_result = await db.execute(
+        select(Vitals)
+        .where(Vitals.patient_id == uuid_lib.UUID(data.patient_id))
+        .order_by(desc(Vitals.recorded_at))
+        .limit(50)
+    )
+    historical = hist_result.scalars().all()
+
+    anomaly_result = None
+    if len(historical) >= 5:
+        anomaly_result = detect_anomalies(historical, vitals)
+
+        if anomaly_result:
+            alert = AnomalyAlert(
+                patient_id=uuid_lib.UUID(data.patient_id),
+                vital_reading_id=vitals.id,
+                detection_methods=anomaly_result["methods"],
+                severity=anomaly_result["severity"],
+                details=anomaly_result,
+            )
+            db.add(alert)
+
+    # Single atomic commit — vitals + timeline + anomaly alert together
     await db.commit()
     await db.refresh(vitals)
 

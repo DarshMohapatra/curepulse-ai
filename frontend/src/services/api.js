@@ -27,6 +27,11 @@ export const vitalsAPI = {
     api.get(`/api/vitals/${patientId}/forecast?vital=${vital}&days=${days}`),
 }
 
+export const anomalyAPI = {
+  getAll: (patientId) => api.get(`/api/anomalies/${patientId}`),
+  acknowledge: (alertId) => api.patch(`/api/anomalies/${alertId}/acknowledge`),
+}
+
 export const timelineAPI = {
   getAll: (patientId) => api.get(`/api/timeline/${patientId}`),
   create: (data) => api.post('/api/timeline/', data),

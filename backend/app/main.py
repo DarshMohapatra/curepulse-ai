@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import auth, vitals, timeline
-from .models import user, vitals as vitals_model, timeline as timeline_model
+from .routers import auth, vitals, timeline, anomaly
+from .models import user, vitals as vitals_model, timeline as timeline_model, anomaly as anomaly_model
 
 app = FastAPI(
     title="CurePulse AI API",
@@ -40,3 +40,4 @@ async def health_check():
 app.include_router(auth.router)
 app.include_router(vitals.router)
 app.include_router(timeline.router)
+app.include_router(anomaly.router)
