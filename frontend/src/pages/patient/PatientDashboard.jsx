@@ -195,7 +195,7 @@ export default function PatientDashboard() {
           <div style={{...card, marginBottom:24, border:'1px solid rgba(239,68,68,0.2)', background:'rgba(239,68,68,0.04)'}}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16}}>
               <h2 style={{fontSize:15, fontWeight:600, color:'#f87171'}}>
-                Anomaly Alerts ({anomalies.filter(a => !a.acknowledged).length} active)
+                Health Irregularities ({anomalies.filter(a => !a.acknowledged).length} active)
               </h2>
               <span style={{fontSize:11, color:'#4a6080'}}>Phase 2 — AI Detection</span>
             </div>
@@ -214,7 +214,7 @@ export default function PatientDashboard() {
                         {a.severity}
                       </span>
                       <span style={{fontSize:13, color:'#f0f4ff'}}>
-                        {a.details?.message || 'Anomaly detected'}
+                        {a.details?.message?.replace('Anomaly detected', 'Irregularity detected') || 'Irregularity detected'}
                       </span>
                     </div>
                     <div style={{display:'flex', alignItems:'center', gap:10}}>

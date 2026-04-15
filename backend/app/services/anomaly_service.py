@@ -233,6 +233,6 @@ def detect_anomalies(historical_vitals, new_vital):
         "severity": overall_severity,
         "methods": methods,
         "flagged_vitals": flagged_vitals,
-        "message": f"Anomaly detected in: {', '.join(flagged_vitals)}",
+        "message": f"Irregularity detected in: {', '.join(flagged_vitals)}",
         "details": details,
     }
